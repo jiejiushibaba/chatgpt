@@ -16,6 +16,7 @@ available_setting = {
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
     "model": "gpt-3.5-turbo",
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
+    "azure_deployment_id": "", #azure 模型部署名称
 
     # Bot触发配置
     "single_chat_prefix": ["bot", "@bot"],  # 私聊时文本需要包含该前缀才能触发机器人回复
@@ -53,7 +54,7 @@ available_setting = {
     "group_speech_recognition": False,  # 是否开启群组语音识别
     "voice_reply_voice": False,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
     "always_reply_voice": False,  # 是否一直使用语音回复
-    "voice_to_text": "openai",  # 语音识别引擎，支持openai,google,azure
+    "voice_to_text": "openai",  # 语音识别引擎，支持openai,baidu,google,azure
     "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline),azure
 
     # baidu 语音api配置， 使用百度语音识别和语音合成时需要

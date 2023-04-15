@@ -48,9 +48,6 @@ class ChatChannel(Channel):
         if first_in: # context首次传入时，receiver是None，根据类型设置receiver
             config = conf()
             cmsg = context['msg']
-            if cmsg.from_user_id == self.user_id and not config.get('trigger_by_self', True):
-                logger.debug("[WX]self message skipped")
-                return None
             if context.get("isgroup", False):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
@@ -69,6 +66,13 @@ class ChatChannel(Channel):
             else:
                 context['session_id'] = cmsg.other_user_id
                 context['receiver'] = cmsg.other_user_id
+            e_context = PluginManager().emit_event(EventContext(Event.ON_RECEIVE_MESSAGE, {'channel': self, 'context': context}))
+            context = e_context['context']
+            if e_context.is_pass() or context is None:
+                return context
+            if cmsg.from_user_id == self.user_id and not config.get('trigger_by_self', True):
+                logger.debug("[WX]self message skipped")
+                return None
 
         # 消息内容匹配过程，并处理content
         if ctype == ContextType.TEXT:
@@ -170,6 +174,8 @@ class ChatChannel(Channel):
                         reply = self._generate_reply(new_context)
                     else:
                         return
+            elif context.type == ContextType.IMAGE:  # 图片消息，当前无默认逻辑
+                pass
             else:
                 logger.error('[WX] unknown context type: {}'.format(context.type))
                 return
@@ -231,6 +237,9 @@ class ChatChannel(Channel):
                 time.sleep(3+3*retry_cnt)
                 self._send(reply, context, retry_cnt+1)
 
+    def _success_callback(self, session_id, **kwargs):# 线程正常结束时的回调函数
+        logger.debug("Worker return success, session_id = {}".format(session_id))
+
     def _fail_callback(self, session_id, exception, **kwargs): # 线程异常结束时的回调函数
         logger.exception("Worker return exception: {}".format(exception))
 
@@ -240,6 +249,8 @@ class ChatChannel(Channel):
                 worker_exception = worker.exception()
                 if worker_exception:
                     self._fail_callback(session_id, exception = worker_exception, **kwargs)
+                else:
+                    self._success_callback(session_id, **kwargs)
             except CancelledError as e:
                 logger.info("Worker cancelled, session_id = {}".format(session_id))
             except Exception as e:
